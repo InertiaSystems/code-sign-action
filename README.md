@@ -52,7 +52,7 @@ $fileContentBytes = get-content 'YOURFILEPATH.pfx' -Encoding Byte
 ```
 runs-on: windows-latest
 steps:
-  uses: inertiasystems/code-sign-action@v1
+  uses: InertiaSystems/code-sign-action@v1
   with:
     certificate: '${{ secrets.CERTIFICATE }}'
     password: '${{ secrets.PASSWORD }}'
