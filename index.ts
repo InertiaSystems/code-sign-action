@@ -8,7 +8,7 @@ import { env } from 'process';
 const asyncExec = util.promisify(exec);
 const certificateFileName = env['TEMP'] + '\\certificate.pfx';
 
-const signtool = 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe';
+const signtool = '"C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"';
 
 const signtoolFileExtensions = [
     '.dll', '.exe', '.sys', '.vxd',
@@ -61,7 +61,10 @@ async function signWithSigntool(fileName: string) {
           timestampUrl = 'http://timestamp.digicert.com';
         }
         const pass : string= core.getInput('password');
-        var command = signtool + " sign /debug /f " + certificateFileName + " /tr " + timestampUrl + " /td SHA256"
+        var command = signtool + " sign /debug"
+        command = command + ` /f "${certificateFileName}"`
+        command = command + " /td SHA256"
+        command = command + ` /tr "${timestampUrl}"`
         command = command + ` /p "${pass}"`
         const sha1 : string= core.getInput('certificatesha1');
         if (sha1 != ''){
