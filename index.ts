@@ -61,23 +61,14 @@ async function signWithSigntool(fileName: string) {
           timestampUrl = 'http://timestamp.digicert.com';
         }
         const pass : string= core.getInput('password');
-        var command = signtool + " sign /f " + certificateFileName + " /tr " + timestampUrl + " /td SHA256 /p " + pass
+        var command = signtool + " sign /debug /f " + certificateFileName + " /tr " + timestampUrl + " /td SHA256 /p " + pass
         
         const sha1 : string= core.getInput('certificatesha1');
         if (sha1 != ''){
             command = command + ` /sha1 "${sha1}"`
             vitalParameterIncluded = true; 
         }
-        const name : string= core.getInput('certificatename');
-        if (name != ''){
-            vitalParameterIncluded = true; 
-            command = command + ` /n "${name}"`
-        }
-        const desc : string= core.getInput('description');
-        if (desc != ''){
-            vitalParameterIncluded = true; 
-            command = command + ` /d "${desc}"`
-        }
+       
         if (!vitalParameterIncluded){
             console.log("You need to include a NAME or a SHA1 Hash for the certificate to sign with.")
         }
