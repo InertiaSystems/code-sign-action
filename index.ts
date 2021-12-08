@@ -61,8 +61,8 @@ async function signWithSigntool(fileName: string) {
           timestampUrl = 'http://timestamp.digicert.com';
         }
         const pass : string= core.getInput('password');
-        var command = signtool + " sign /debug /f " + certificateFileName + " /tr " + timestampUrl + " /td SHA256 /p " + pass
-        
+        var command = signtool + " sign /debug /f " + certificateFileName + " /tr " + timestampUrl + " /td SHA256"
+        command = command + ` /p "${pass}"`
         const sha1 : string= core.getInput('certificatesha1');
         if (sha1 != ''){
             command = command + ` /sha1 "${sha1}"`
@@ -74,11 +74,12 @@ async function signWithSigntool(fileName: string) {
         }
         command = command + ` ${fileName}`; 
         console.log("Signing command: " + command); 
+        console.log("pass: " + pass)
         const { stdout } = await asyncExec(command);
         console.log(stdout);
         return true;
     } catch(err) {
-      
+        console.log(err);
         return false;
     }
 }
