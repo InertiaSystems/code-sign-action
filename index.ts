@@ -8,7 +8,7 @@ import { env } from 'process';
 const asyncExec = util.promisify(exec);
 const certificateFileName = env['TEMP'] + '\\certificate.pfx';
 
-const signtool = 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe';
+
 
 const signtoolFileExtensions = [
     '.dll', '.exe', '.sys', '.vxd',
@@ -21,6 +21,35 @@ function sleep(seconds: number) {
     if (seconds > 0)
         console.log(`Waiting for ${seconds} seconds.`);
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+
+async function getSigntoolLocation(): Promise<string> {
+    const windowsKitsfolder = 'C:/Program Files (x86)/Windows Kits/10/bin/';
+    const folders = await fs.readdir(windowsKitsfolder);
+    let fileName = 'unable to find signtool.exe';
+    let maxVersion = 0;
+    for (const folder of folders) {
+        if (!folder.endsWith('.0')) {
+            continue;
+        }
+        const folderVersion = parseInt(folder.replace(/\./g,''));
+        if (folderVersion > maxVersion) {
+            const signtoolFilename = `${windowsKitsfolder}${folder}/x64/signtool.exe`;
+            try {
+                const stat = await fs.stat(signtoolFilename);
+                if (stat.isFile()) {
+                    fileName = signtoolFilename
+                    maxVersion = folderVersion;
+                }
+            }
+            catch {
+            }
+        }
+    }
+
+    console.log(`Signtool location is ${fileName}.`);
+
+    return fileName;
 }
 
 async function createCertificatePfx() {
@@ -61,6 +90,9 @@ async function signWithSigntool(fileName: string) {
         if (timestampUrl === '') {
           timestampUrl = 'http://timestamp.digicert.com';
         }
+        
+        const signtool = await getSigntoolLocation()
+        
         var command = `"${signtool}" sign /f ${certificateFileName} ${/tr ${timestampUrl} /td SHA256`
         const sha1 : string= core.getInput('certificatesha1');
         if (sha1 != ''){
@@ -127,10 +159,19 @@ async function* getFiles(folder: string, recursive: boolean): any {
 }
 
 async function signFiles() {
-    const folder = core.getInput('folder', { required: true });
-    const recursive = core.getInput('recursive') == 'true';
-    for await (const file of getFiles(folder, recursive)) {
-        await trySignFile(file);
+    const folder = core.getInput('folder');
+     if (folder !== '') {
+        const recursive = core.getInput('recursive') == 'true';
+        for await (const file of getFiles(folder, recursive)) {
+            await trySignFile(file);
+        }
+     } else {
+        const files = core.getMultilineInput('files');
+        if (files.length === 0)
+            core.setFailed(`Either folder or files should be specified`);
+        for (const file of files) {
+            await trySignFile(file);
+        }
     }
 }
 
